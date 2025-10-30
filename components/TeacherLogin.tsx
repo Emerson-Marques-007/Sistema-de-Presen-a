@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
-import { CheckCircleIcon } from './Icons';
-import { Logo } from './LogoPlaceholder';
+import { CheckCircleIcon } from './Icons.js';
+import { Logo } from './LogoPlaceholder.js';
 
 export const TeacherLogin = ({ onLogin }) => {
   const [isRegister, setIsRegister] = useState(false);

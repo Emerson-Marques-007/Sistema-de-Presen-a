@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 export const UsersIcon = ({ className = 'w-6 h-6' }) => (

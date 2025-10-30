@@ -1,7 +1,6 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
-import { LogoutIcon, CheckCircleIcon, ExclamationCircleIcon, BookOpenIcon, QrCodeIcon } from './Icons';
-import { Logo } from './LogoPlaceholder';
+import { LogoutIcon, CheckCircleIcon, ExclamationCircleIcon, BookOpenIcon, QrCodeIcon } from './Icons.js';
+import { Logo } from './LogoPlaceholder.js';
 
 export const StudentView = (props) => {
   const { student, allClasses, attendanceRecords, onMarkAttendance, onLogout, onJustifyAbsence, initialFeedback } = props;

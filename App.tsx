@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
-import { StudentView } from './components/StudentView';
-import { TeacherLogin } from './components/TeacherLogin';
-import { TeacherDashboard } from './components/TeacherDashboard';
-import { StudentLogin } from './components/StudentLogin';
-import { MOCK_CLASSES, MOCK_TEACHER_ID } from './constants';
+import { StudentView } from './components/StudentView.js';
+import { TeacherLogin } from './components/TeacherLogin.js';
+import { TeacherDashboard } from './components/TeacherDashboard.js';
+import { StudentLogin } from './components/StudentLogin.js';
+import { MOCK_CLASSES, MOCK_TEACHER_ID } from './constants.js';
 
 const App = () => {
   const [students, setStudents] = useState([]);

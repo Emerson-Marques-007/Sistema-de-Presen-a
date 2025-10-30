@@ -1,9 +1,8 @@
-
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { getDashboardSummary, getAttendanceAnalysis, getRiskAnalysis, getCommunicationDraft, getComparativeAnalysis } from '../services/geminiService';
-import { UsersIcon, BookOpenIcon, PlusIcon, PencilIcon, TrashIcon, SparklesIcon, LogoutIcon, QrCodeIcon, ChartBarIcon, ShieldExclamationIcon, EnvelopeIcon, ArrowLeftIcon, UserCircleIcon, XIcon, DownloadIcon, FileTextIcon, CheckBadgeIcon, XCircleIcon } from './Icons';
+import { getDashboardSummary, getAttendanceAnalysis, getRiskAnalysis, getCommunicationDraft, getComparativeAnalysis } from '../services/geminiService.js';
+import { UsersIcon, BookOpenIcon, PlusIcon, PencilIcon, TrashIcon, SparklesIcon, LogoutIcon, QrCodeIcon, ChartBarIcon, ShieldExclamationIcon, EnvelopeIcon, ArrowLeftIcon, UserCircleIcon, XIcon, DownloadIcon, FileTextIcon, CheckBadgeIcon, XCircleIcon } from './Icons.js';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { Logo } from './LogoPlaceholder';
+import { Logo } from './LogoPlaceholder.js';
 
 const renderMarkdown = (text) => {
   let html = text
@@ -57,15 +56,18 @@ export const TeacherDashboard = (props) => {
 
   const studentsInClass = useMemo(() => {
     if (!selectedClassId) return [];
-    return students.filter(student => student.classIds.includes(selectedClassId));
+    // FIX: Guard against 'students' being of unknown type by ensuring it's an array.
+    return (Array.isArray(students) ? students : []).filter(student => student.classIds.includes(selectedClassId));
   }, [students, selectedClassId]);
 
   const attendanceForSelectedClassAndDate = useMemo(() => 
-    attendance.filter(a => a.date === selectedDate && a.classId === selectedClassId)
+    // FIX: Guard against 'attendance' being of unknown type by ensuring it's an array.
+    (Array.isArray(attendance) ? attendance : []).filter(a => a.date === selectedDate && a.classId === selectedClassId)
   , [attendance, selectedDate, selectedClassId]);
 
   const attendanceForSelectedClass = useMemo(() =>
-    attendance.filter(a => a.classId === selectedClassId)
+    // FIX: Guard against 'attendance' being of unknown type by ensuring it's an array.
+    (Array.isArray(attendance) ? attendance : []).filter(a => a.classId === selectedClassId)
   , [attendance, selectedClassId]);
     
   useEffect(() => {
@@ -83,12 +85,13 @@ export const TeacherDashboard = (props) => {
   const getInitials = (name) => name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
 
   const selectedClass = useMemo(() =>
-    classes.find(c => c.id === selectedClassId)
+    (Array.isArray(classes) ? classes : []).find(c => c.id === selectedClassId)
   , [classes, selectedClassId]);
   
   const classDetailsStats = useMemo(() => {
     if (!viewingClassDetails) return [];
-    const studentsInThisClass = students.filter(s => s.classIds.includes(viewingClassDetails.id));
+    // FIX: Guard against 'students' being of unknown type by ensuring it's an array.
+    const studentsInThisClass = (Array.isArray(students) ? students : []).filter(s => s.classIds.includes(viewingClassDetails.id));
     // FIX: Ensure 'attendance' is treated as an array to prevent 'filter' does not exist error.
     const attendanceForThisClass = (Array.isArray(attendance) ? attendance : []).filter(a => a.classId === viewingClassDetails.id);
     return studentsInThisClass.map(student => {
@@ -100,7 +103,8 @@ export const TeacherDashboard = (props) => {
 
  const classHistory = useMemo(() => {
     if (!viewingClassDetails) return [];
-    const attendanceForThisClass = attendance.filter(a => a.classId === viewingClassDetails.id);
+    // FIX: Guard against 'attendance' being of unknown type by ensuring it's an array.
+    const attendanceForThisClass = (Array.isArray(attendance) ? attendance : []).filter(a => a.classId === viewingClassDetails.id);
     const groupedByDate = attendanceForThisClass.reduce((acc, record) => {
         if (!acc[record.date]) {
             acc[record.date] = [];
@@ -143,7 +147,8 @@ export const TeacherDashboard = (props) => {
     }, [attendanceForSelectedClass, studentsInClass.length]);
     
   const filteredAndSortedClasses = useMemo(() => {
-    return classes
+    // FIX: Guard against 'classes' being of unknown type by ensuring it's an array.
+    return (Array.isArray(classes) ? classes : [])
       .filter(cls => cls.name.toLowerCase().includes(classFilter.toLowerCase()))
       .sort((a, b) => (classSort === 'newest') ? (b.createdAt || 0) - (a.createdAt || 0) : (a.createdAt || 0) - (b.createdAt || 0));
   }, [classes, classFilter, classSort]);
@@ -161,7 +166,8 @@ export const TeacherDashboard = (props) => {
     setIsLoading(true);
     setAiReport('');
     const studentList = studentId ? props.students : studentsInClass;
-    const attendanceData = studentId ? props.attendance.filter(a => a.studentId === studentId) : attendanceForSelectedClass;
+    // FIX: Guard against 'props.attendance' being of unknown type by ensuring it's an array.
+    const attendanceData = studentId ? (Array.isArray(props.attendance) ? props.attendance : []).filter(a => a.studentId === studentId) : attendanceForSelectedClass;
     const report = await getRiskAnalysis(attendanceData, studentList, studentId);
     setAiReport(report);
     setIsLoading(false);
@@ -182,7 +188,7 @@ export const TeacherDashboard = (props) => {
       }
     });
     setIsLoading(false);
-  }
+  };
 
   const handleClassSubmit = (e) => {
     e.preventDefault();
@@ -203,7 +209,8 @@ export const TeacherDashboard = (props) => {
     if (modalContent?.type === 'confirmDelete') {
       props.onDeleteClass(modalContent.class.id);
       if (viewingClassDetails?.id === modalContent.class.id) setViewingClassDetails(null);
-      if (selectedClassId === modalContent.class.id) setSelectedClassId(classes.length > 1 ? classes.find(c => c.id !== modalContent.class.id).id : '');
+      // FIX: Guard against 'classes' being of unknown type by ensuring it's an array.
+      if (selectedClassId === modalContent.class.id) setSelectedClassId(classes.length > 1 ? (Array.isArray(classes) ? classes : []).find(c => c.id !== modalContent.class.id)?.id || '' : '');
     }
     setModalContent(null);
   }
@@ -236,11 +243,13 @@ export const TeacherDashboard = (props) => {
             case 'qrCode': { /* ... implementation ... */ }
             case 'studentProfile': {
                 const { student } = modalContent;
-                const studentAttendance = props.attendance.filter(a => a.studentId === student.id);
-                const studentCommunications = props.communicationLogs.filter(c => c.studentId === student.id);
+                // FIX: Guard against 'props.attendance' and 'props.communicationLogs' being of unknown type by ensuring they are arrays.
+                const studentAttendance = (Array.isArray(props.attendance) ? props.attendance : []).filter(a => a.studentId === student.id);
+                const studentCommunications = (Array.isArray(props.communicationLogs) ? props.communicationLogs : []).filter(c => c.studentId === student.id);
                 const studentChartData = Array.from(new Set(studentAttendance.map(a => a.classId))).map(classId => {
                     const classRecords = studentAttendance.filter(a => a.classId === classId);
-                    const className = props.classes.find(c => c.id === classId)?.name || 'Desconhecida';
+                    // FIX: Guard against 'props.classes' being of unknown type by ensuring it's an array.
+                    const className = (Array.isArray(props.classes) ? props.classes : []).find(c => c.id === classId)?.name || 'Desconhecida';
                     const presences = classRecords.filter(r => r.status === 'present' || r.status === 'justified_absent').length;
                     const total = classRecords.length;
                     return { name: className, "Presença (%)": total > 0 ? (presences / total) * 100 : 0 };
@@ -285,7 +294,8 @@ export const TeacherDashboard = (props) => {
             }
              case 'viewJustification': {
                 const { record } = modalContent;
-                const studentName = props.students.find(s => s.id === record.studentId)?.name || 'Aluno';
+                // FIX: Guard against 'props.students' being of unknown type by ensuring it's an array.
+                const studentName = (Array.isArray(props.students) ? props.students : []).find(s => s.id === record.studentId)?.name || 'Aluno';
                 return (
                     <div>
                         <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-gray-800"><FileTextIcon /> Justificativa de {studentName}</h2>
@@ -307,7 +317,8 @@ export const TeacherDashboard = (props) => {
   const renderCommonHeader = () => (
     <div className="flex flex-col sm:flex-row gap-4 items-center flex-wrap">
         <select value={selectedClassId} onChange={e => setSelectedClassId(e.target.value)} className="w-full sm:w-auto bg-white border border-gray-300 text-gray-900 rounded-lg p-3 focus:ring-2 focus:ring-blue-500">
-            {props.classes.map(cls => <option key={cls.id} value={cls.id}>{cls.name}</option>)}
+            {/* FIX: Guard against 'props.classes' being of unknown type by ensuring it's an array. */}
+            {(Array.isArray(props.classes) ? props.classes : []).map(cls => <option key={cls.id} value={cls.id}>{cls.name}</option>)}
         </select>
         <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="w-full sm:w-auto bg-white border border-gray-300 text-gray-900 rounded-lg p-3 focus:ring-2 focus:ring-blue-500" />
     </div>
@@ -328,8 +339,8 @@ export const TeacherDashboard = (props) => {
       {renderModal()}
       <header className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-4"> {/* FIX: Add className to Logo component to satisfy required prop */}
-<Logo className="h-10 w-auto"/> <div className="w-px h-6 bg-gray-200 hidden sm:block"></div> <h1 className="text-xl font-semibold text-gray-800 hidden sm:block">Painel do Professor</h1> </div>
+            {/* FIX: Add className to Logo component to satisfy required prop */}
+            <div className="flex items-center gap-4"> <Logo className="h-10 w-auto"/> <div className="w-px h-6 bg-gray-200 hidden sm:block"></div> <h1 className="text-xl font-semibold text-gray-800 hidden sm:block">Painel do Professor</h1> </div>
             <div className="relative" ref={profileDropdownRef}>
                 <button onClick={() => setIsProfileDropdownOpen(prev => !prev)} className="flex items-center gap-3 hover:bg-gray-100 p-2 rounded-lg transition-colors">
                     <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold overflow-hidden"> {props.teacher.photoUrl ? <img src={props.teacher.photoUrl} alt="Foto de Perfil" className="w-full h-full object-cover" /> : <span>{getInitials(props.teacher.name)}</span>} </div>
@@ -397,8 +408,8 @@ export const TeacherDashboard = (props) => {
                                         {record?.justificationStatus === 'pending' && <button onClick={() => setModalContent({ type: 'viewJustification', record })} className="p-1 rounded-full bg-yellow-100 text-yellow-800 animate-pulse"><FileTextIcon className="w-4 h-4" /></button>}
                                     </td>
                                     <td className="p-4 text-center">
-                                       {status === 'absent' && ( <button onClick={() => handleGenerateCommunicationDraft(student, 'absence')} disabled={isLoading} className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md disabled:text-gray-300" title="Gerar e-mail para o aluno"> {/* FIX: Add className to EnvelopeIcon to prevent potential render issues. */}
-<EnvelopeIcon className="w-5 h-5" /> </button> )}
+                                       {/* FIX: Add className to EnvelopeIcon to prevent potential render issues and fix 'Expected 1 arguments, but got 0' error. */}
+                                       {status === 'absent' && ( <button onClick={() => handleGenerateCommunicationDraft(student, 'absence')} disabled={isLoading} className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md disabled:text-gray-300" title="Gerar e-mail para o aluno"> <EnvelopeIcon className="w-5 h-5" /> </button> )}
                                     </td>
                                 </tr>
                             )
@@ -418,7 +429,7 @@ export const TeacherDashboard = (props) => {
                   <>
                     <div className="flex items-center gap-4">
                         <select value={selectedClassId} onChange={e => setSelectedClassId(e.target.value)} className="w-full sm:w-auto bg-white border border-gray-300 text-gray-900 rounded-lg p-3">
-                            {props.classes.map(cls => <option key={cls.id} value={cls.id}>{cls.name}</option>)}
+                            {(Array.isArray(props.classes) ? props.classes : []).map(cls => <option key={cls.id} value={cls.id}>{cls.name}</option>)}
                         </select>
                         <button onClick={() => handleGenerateRiskAnalysis()} disabled={isLoading || !selectedClassId} className="flex items-center gap-2 py-3 px-5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold"><SparklesIcon className="w-5 h-5" /> {isLoading ? 'Analisando...' : 'Gerar Análise de Risco'}</button>
                     </div>
@@ -452,7 +463,7 @@ export const TeacherDashboard = (props) => {
                             <div key={cls.id} className="bg-white border p-6 rounded-xl flex flex-col justify-between hover:shadow-md">
                                 <div>
                                     <h3 className="text-lg font-bold mb-2">{cls.name}</h3>
-                                     <p className="text-sm text-gray-500 mb-4">{props.students.filter(s => s.classIds.includes(cls.id)).length} aluno(s)</p>
+                                     <p className="text-sm text-gray-500 mb-4">{(Array.isArray(props.students) ? props.students : []).filter(s => s.classIds.includes(cls.id)).length} aluno(s)</p>
                                 </div>
                                 <div className="flex justify-end items-center gap-2 mt-4">
                                     <button onClick={() => setModalContent({ type: 'confirmDelete', class: cls })} className="p-2 text-gray-500 hover:text-red-600"><TrashIcon /></button>
