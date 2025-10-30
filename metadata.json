@@ -1,0 +1,5 @@
+{
+  "name": "Sistema de Presença",
+  "description": "Um aplicativo para gerenciar a presença de alunos com um painel de professor aprimorado por IA. Alunos podem marcar presença facilmente, e professores podem gerenciar turmas, presenças e obter relatórios inteligentes.",
+  "requestFramePermissions": []
+}
