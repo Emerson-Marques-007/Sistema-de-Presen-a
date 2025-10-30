@@ -132,14 +132,16 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = (props) => {
  const classHistory = useMemo(() => {
     if (!viewingClassDetails) return [];
     const attendanceForThisClass = attendance.filter(a => a.classId === viewingClassDetails.id);
-    // FIX: Using a generic parameter for `reduce` to ensure correct type inference for the accumulator.
-    const groupedByDate = attendanceForThisClass.reduce<Record<string, AttendanceRecord[]>>((acc, record) => {
+    // FIX: The generic type argument on `reduce` was causing a TypeScript error.
+    // The fix is to remove it and instead cast the initial value of the accumulator to the correct type.
+    // This allows TypeScript to correctly infer the types for `acc` and `records`.
+    const groupedByDate = attendanceForThisClass.reduce((acc, record) => {
         if (!acc[record.date]) {
             acc[record.date] = [];
         }
         acc[record.date].push(record);
         return acc;
-    }, {});
+    }, {} as Record<string, AttendanceRecord[]>);
 
     return Object.entries(groupedByDate).map(([date, records]) => {
         const presentCount = records.filter(r => r.status === 'present' || r.status === 'justified_absent').length;
@@ -158,14 +160,16 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = (props) => {
 
    const chartData = useMemo(() => {
         if (studentsInClass.length === 0 || attendanceForSelectedClass.length === 0) return [];
-        // FIX: Using a generic parameter for `reduce` to ensure correct type inference for the accumulator.
-        const groupedByDate = attendanceForSelectedClass.reduce<Record<string, AttendanceRecord[]>>((acc, record) => {
+        // FIX: The generic type argument on `reduce` was causing a TypeScript error.
+        // The fix is to remove it and instead cast the initial value of the accumulator to the correct type.
+        // This allows TypeScript to correctly infer the types for `acc` and `records`.
+        const groupedByDate = attendanceForSelectedClass.reduce((acc, record) => {
             if (!acc[record.date]) {
                 acc[record.date] = [];
             }
             acc[record.date].push(record);
             return acc;
-        }, {});
+        }, {} as Record<string, AttendanceRecord[]>);
         return Object.entries(groupedByDate).map(([date, records]) => {
             const presentCount = records.filter(r => r.status === 'present' || r.status === 'justified_absent').length;
             const rate = studentsInClass.length > 0 ? Math.round((presentCount / studentsInClass.length) * 100) : 0;
