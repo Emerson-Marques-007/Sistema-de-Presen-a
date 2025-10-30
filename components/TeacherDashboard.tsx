@@ -1,43 +1,11 @@
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import type { Student, Class, AttendanceRecord, Teacher, CommunicationLog } from '../types';
-import { getDashboardSummary, getAttendanceAnalysis, getRiskAnalysis, getCommunicationDraft, getComparativeAnalysis, type CommunicationType } from '../services/geminiService';
+import { getDashboardSummary, getAttendanceAnalysis, getRiskAnalysis, getCommunicationDraft, getComparativeAnalysis } from '../services/geminiService';
 import { UsersIcon, BookOpenIcon, PlusIcon, PencilIcon, TrashIcon, SparklesIcon, LogoutIcon, QrCodeIcon, ChartBarIcon, ShieldExclamationIcon, EnvelopeIcon, ArrowLeftIcon, UserCircleIcon, XIcon, DownloadIcon, FileTextIcon, CheckBadgeIcon, XCircleIcon } from './Icons';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { Logo } from './LogoPlaceholder';
 
-interface TeacherDashboardProps {
-  teacher: Teacher;
-  students: Student[];
-  classes: Class[];
-  attendance: AttendanceRecord[];
-  communicationLogs: CommunicationLog[];
-  onLogout: () => void;
-  onSetAttendance: (studentId: string, classId: string, date: string, status: 'present' | 'absent') => void;
-  onAddClass: (className: string) => void;
-  onEditClass: (classId: string, newName: string) => void;
-  onDeleteClass: (classId: string) => void;
-  onAddStudentToClass: (studentId: string, classId: string) => void; // This is a mock function
-  onUpdateTeacherProfile: (updatedTeacher: Partial<Teacher>) => void;
-  onLogCommunication: (log: Omit<CommunicationLog, 'id' | 'timestamp'>) => void;
-  onUpdateJustificationStatus: (recordId: string, status: 'approved' | 'rejected') => void;
-}
-
-type ActiveTab = 'dashboard' | 'attendance' | 'classes' | 'aiAnalysis' | 'profile';
-
-type ModalContent = 
-  | { type: 'addClass' }
-  | { type: 'editClass', class: Class }
-  | { type: 'aiReport', content: string, title: string }
-  | { type: 'confirmDelete', class: Class }
-  | { type: 'qrCode', classId: string, className: string }
-  | { type: 'communicationDraft', content: string, studentName: string, onConfirm: (content: string) => void }
-  | { type: 'aiFeedbackOptions', student: Student }
-  | { type: 'studentProfile', student: Student }
-  | { type: 'viewJustification', record: AttendanceRecord }
-  | null;
-
-const renderMarkdown = (text: string) => {
+const renderMarkdown = (text) => {
   let html = text
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
@@ -45,7 +13,7 @@ const renderMarkdown = (text: string) => {
   return { __html: html };
 }
 
-const exportToCSV = (data: any[], filename: string) => {
+const exportToCSV = (data, filename) => {
     if (data.length === 0) return;
     const header = Object.keys(data[0]).join(',');
     const csv = data.map(row => Object.values(row).join(',')).join('\n');
@@ -57,27 +25,27 @@ const exportToCSV = (data: any[], filename: string) => {
     URL.revokeObjectURL(link.href);
 };
 
-export const TeacherDashboard: React.FC<TeacherDashboardProps> = (props) => {
-  const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
-  const [selectedClassId, setSelectedClassId] = useState<string>(props.classes.length > 0 ? props.classes[0].id : '');
+export const TeacherDashboard = (props) => {
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [selectedClassId, setSelectedClassId] = useState(props.classes.length > 0 ? props.classes[0].id : '');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [modalContent, setModalContent] = useState<ModalContent>(null);
+  const [modalContent, setModalContent] = useState(null);
   const [newClassName, setNewClassName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingSummary, setIsLoadingSummary] = useState(false);
-  const [aiReport, setAiReport] = useState<string>('');
-  const [dashboardSummary, setDashboardSummary] = useState<string>('');
-  const [viewingClassDetails, setViewingClassDetails] = useState<Class | null>(null);
+  const [aiReport, setAiReport] = useState('');
+  const [dashboardSummary, setDashboardSummary] = useState('');
+  const [viewingClassDetails, setViewingClassDetails] = useState(null);
   const [classFilter, setClassFilter] = useState('');
-  const [classSort, setClassSort] = useState<'newest' | 'oldest'>('newest');
+  const [classSort, setClassSort] = useState('newest');
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
-  const profileDropdownRef = useRef<HTMLDivElement>(null);
-  const [activeAnalysisTab, setActiveAnalysisTab] = useState<'risk' | 'comparison'>('risk');
-  const [comparisonClassIds, setComparisonClassIds] = useState<string[]>([]);
+  const profileDropdownRef = useRef(null);
+  const [activeAnalysisTab, setActiveAnalysisTab] = useState('risk');
+  const [comparisonClassIds, setComparisonClassIds] = useState([]);
   
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target as Node)) {
+    function handleClickOutside(event) {
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
         setIsProfileDropdownOpen(false);
       }
     }
@@ -112,7 +80,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = (props) => {
     }
   }, [activeTab, selectedClassId, studentsInClass, attendanceForSelectedClass, classes]);
   
-  const getInitials = (name: string) => name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+  const getInitials = (name) => name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
 
   const selectedClass = useMemo(() =>
     classes.find(c => c.id === selectedClassId)
@@ -121,7 +89,8 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = (props) => {
   const classDetailsStats = useMemo(() => {
     if (!viewingClassDetails) return [];
     const studentsInThisClass = students.filter(s => s.classIds.includes(viewingClassDetails.id));
-    const attendanceForThisClass = attendance.filter(a => a.classId === viewingClassDetails.id);
+    // FIX: Ensure 'attendance' is treated as an array to prevent 'filter' does not exist error.
+    const attendanceForThisClass = (Array.isArray(attendance) ? attendance : []).filter(a => a.classId === viewingClassDetails.id);
     return studentsInThisClass.map(student => {
         const presences = attendanceForThisClass.filter(a => a.studentId === student.id && (a.status === 'present' || a.status === 'justified_absent')).length;
         const absences = attendanceForThisClass.filter(a => a.studentId === student.id && a.status === 'absent').length;
@@ -132,16 +101,13 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = (props) => {
  const classHistory = useMemo(() => {
     if (!viewingClassDetails) return [];
     const attendanceForThisClass = attendance.filter(a => a.classId === viewingClassDetails.id);
-    // FIX: The generic type argument on `reduce` was causing a TypeScript error.
-    // The fix is to remove it and instead cast the initial value of the accumulator to the correct type.
-    // This allows TypeScript to correctly infer the types for `acc` and `records`.
     const groupedByDate = attendanceForThisClass.reduce((acc, record) => {
         if (!acc[record.date]) {
             acc[record.date] = [];
         }
         acc[record.date].push(record);
         return acc;
-    }, {} as Record<string, AttendanceRecord[]>);
+    }, {});
 
     return Object.entries(groupedByDate).map(([date, records]) => {
         const presentCount = records.filter(r => r.status === 'present' || r.status === 'justified_absent').length;
@@ -152,7 +118,8 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = (props) => {
   const dailyStats = useMemo(() => {
     const totalStudents = studentsInClass.length;
     if (totalStudents === 0) return { present: 0, absent: 0, rate: 0 };
-    const presentCount = attendanceForSelectedClassAndDate.filter(a => a.status === 'present' || a.status === 'justified_absent').length;
+    // FIX: Ensure 'attendanceForSelectedClassAndDate' is treated as an array before filtering.
+    const presentCount = (Array.isArray(attendanceForSelectedClassAndDate) ? attendanceForSelectedClassAndDate : []).filter(a => a.status === 'present' || a.status === 'justified_absent').length;
     const absentCount = totalStudents - presentCount;
     const rate = totalStudents > 0 ? Math.round((presentCount / totalStudents) * 100) : 0;
     return { present: presentCount, absent: absentCount, rate };
@@ -160,16 +127,13 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = (props) => {
 
    const chartData = useMemo(() => {
         if (studentsInClass.length === 0 || attendanceForSelectedClass.length === 0) return [];
-        // FIX: The generic type argument on `reduce` was causing a TypeScript error.
-        // The fix is to remove it and instead cast the initial value of the accumulator to the correct type.
-        // This allows TypeScript to correctly infer the types for `acc` and `records`.
         const groupedByDate = attendanceForSelectedClass.reduce((acc, record) => {
             if (!acc[record.date]) {
                 acc[record.date] = [];
             }
             acc[record.date].push(record);
             return acc;
-        }, {} as Record<string, AttendanceRecord[]>);
+        }, {});
         return Object.entries(groupedByDate).map(([date, records]) => {
             const presentCount = records.filter(r => r.status === 'present' || r.status === 'justified_absent').length;
             const rate = studentsInClass.length > 0 ? Math.round((presentCount / studentsInClass.length) * 100) : 0;
@@ -192,7 +156,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = (props) => {
     setIsLoading(false);
   };
   
-  const handleGenerateRiskAnalysis = async (studentId?: string) => {
+  const handleGenerateRiskAnalysis = async (studentId) => {
     if (!selectedClass && !studentId) return;
     setIsLoading(true);
     setAiReport('');
@@ -203,7 +167,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = (props) => {
     setIsLoading(false);
   }
   
-  const handleGenerateCommunicationDraft = async (student: Student, type: CommunicationType) => {
+  const handleGenerateCommunicationDraft = async (student, type) => {
     const currentClass = viewingClassDetails || selectedClass;
     if (!currentClass) return;
     
@@ -220,7 +184,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = (props) => {
     setIsLoading(false);
   }
 
-  const handleClassSubmit = (e: React.FormEvent) => {
+  const handleClassSubmit = (e) => {
     e.preventDefault();
     if (modalContent?.type === 'addClass' && newClassName.trim()) {
         props.onAddClass(newClassName.trim());
@@ -239,7 +203,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = (props) => {
     if (modalContent?.type === 'confirmDelete') {
       props.onDeleteClass(modalContent.class.id);
       if (viewingClassDetails?.id === modalContent.class.id) setViewingClassDetails(null);
-      if (selectedClassId === modalContent.class.id) setSelectedClassId(classes.length > 1 ? classes.find(c => c.id !== modalContent.class.id)!.id : '');
+      if (selectedClassId === modalContent.class.id) setSelectedClassId(classes.length > 1 ? classes.find(c => c.id !== modalContent.class.id).id : '');
     }
     setModalContent(null);
   }
@@ -267,7 +231,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = (props) => {
             case 'editClass': return <form onSubmit={handleClassSubmit}><h2 className="text-xl font-bold mb-4 text-gray-800">{modalContent.type === 'addClass' ? 'Adicionar Nova Turma' : 'Editar Turma'}</h2><input type="text" value={newClassName} onChange={(e) => setNewClassName(e.target.value)} placeholder="Nome da Turma" className="w-full bg-gray-100 border border-gray-300 text-gray-900 rounded-lg p-3 mb-4 focus:ring-2 focus:ring-blue-500" autoFocus /><div className="flex justify-end gap-3"><button type="button" onClick={() => setModalContent(null)} className="py-2 px-4 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold text-gray-800">Cancelar</button><button type="submit" className="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold">Salvar</button></div></form>;
             case 'confirmDelete': return <div><h2 className="text-xl font-bold mb-4 text-gray-800">Confirmar Exclusão</h2><p className="text-gray-600 mb-6">Tem certeza que deseja excluir a turma "{modalContent.class.name}"? Esta ação não pode ser desfeita.</p><div className="flex justify-end gap-3"><button type="button" onClick={() => setModalContent(null)} className="py-2 px-4 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold text-gray-800">Cancelar</button><button onClick={handleDeleteClass} className="py-2 px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold">Excluir</button></div></div>;
             case 'aiReport': return <div><h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-blue-600"><SparklesIcon className="w-5 h-5"/> {modalContent.title}</h2><div className="prose prose-sm max-h-[60vh] overflow-y-auto bg-gray-50 p-4 rounded-lg border border-gray-200 text-gray-700"><div dangerouslySetInnerHTML={renderMarkdown(modalContent.content)} /></div></div>;
-            case 'communicationDraft': return <div><h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-blue-600"><EnvelopeIcon/> Rascunho para {modalContent.studentName}</h2><div className="max-h-[60vh] overflow-y-auto bg-gray-50 p-4 rounded-lg border border-gray-200 text-gray-700 whitespace-pre-wrap"><div dangerouslySetInnerHTML={renderMarkdown(modalContent.content)} /></div><div className="flex justify-end mt-4 gap-3"><button onClick={() => { modalContent.onConfirm(modalContent.content); setModalContent(null); }} className="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold">Registrar e Fechar</button></div></div>;
+            case 'communicationDraft': return <div><h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-blue-600"><EnvelopeIcon className="w-5 h-5"/> Rascunho para {modalContent.studentName}</h2><div className="max-h-[60vh] overflow-y-auto bg-gray-50 p-4 rounded-lg border border-gray-200 text-gray-700 whitespace-pre-wrap"><div dangerouslySetInnerHTML={renderMarkdown(modalContent.content)} /></div><div className="flex justify-end mt-4 gap-3"><button onClick={() => { modalContent.onConfirm(modalContent.content); setModalContent(null); }} className="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold">Registrar e Fechar</button></div></div>;
             case 'aiFeedbackOptions': { /* ... implementation ... */ }
             case 'qrCode': { /* ... implementation ... */ }
             case 'studentProfile': {
@@ -349,7 +313,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = (props) => {
     </div>
   );
 
-  const TABS: { id: Exclude<ActiveTab, 'profile'>; label: string; icon: React.ComponentType<{className?: string}> }[] = [
+  const TABS = [
     { id: 'dashboard', label: 'Dashboard', icon: ChartBarIcon },
     { id: 'attendance', label: 'Presenças', icon: UsersIcon },
     { id: 'classes', label: 'Turmas', icon: BookOpenIcon },
@@ -364,7 +328,8 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = (props) => {
       {renderModal()}
       <header className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-4"> <Logo /> <div className="w-px h-6 bg-gray-200 hidden sm:block"></div> <h1 className="text-xl font-semibold text-gray-800 hidden sm:block">Painel do Professor</h1> </div>
+            <div className="flex items-center gap-4"> {/* FIX: Add className to Logo component to satisfy required prop */}
+<Logo className="h-10 w-auto"/> <div className="w-px h-6 bg-gray-200 hidden sm:block"></div> <h1 className="text-xl font-semibold text-gray-800 hidden sm:block">Painel do Professor</h1> </div>
             <div className="relative" ref={profileDropdownRef}>
                 <button onClick={() => setIsProfileDropdownOpen(prev => !prev)} className="flex items-center gap-3 hover:bg-gray-100 p-2 rounded-lg transition-colors">
                     <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold overflow-hidden"> {props.teacher.photoUrl ? <img src={props.teacher.photoUrl} alt="Foto de Perfil" className="w-full h-full object-cover" /> : <span>{getInitials(props.teacher.name)}</span>} </div>
@@ -432,7 +397,8 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = (props) => {
                                         {record?.justificationStatus === 'pending' && <button onClick={() => setModalContent({ type: 'viewJustification', record })} className="p-1 rounded-full bg-yellow-100 text-yellow-800 animate-pulse"><FileTextIcon className="w-4 h-4" /></button>}
                                     </td>
                                     <td className="p-4 text-center">
-                                       {status === 'absent' && ( <button onClick={() => handleGenerateCommunicationDraft(student, 'absence')} disabled={isLoading} className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md disabled:text-gray-300" title="Gerar e-mail para o aluno"> <EnvelopeIcon /> </button> )}
+                                       {status === 'absent' && ( <button onClick={() => handleGenerateCommunicationDraft(student, 'absence')} disabled={isLoading} className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md disabled:text-gray-300" title="Gerar e-mail para o aluno"> {/* FIX: Add className to EnvelopeIcon to prevent potential render issues. */}
+<EnvelopeIcon className="w-5 h-5" /> </button> )}
                                     </td>
                                 </tr>
                             )

@@ -7,6 +7,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- 
+      Aviso: O CDN do Tailwind é ótimo para desenvolvimento, mas para produção, 
+      é recomendado instalar o TailwindCSS como um plugin PostCSS para melhor performance e otimização.
+      Veja mais em: https://tailwindcss.com/docs/installation
+    -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -33,6 +38,6 @@
 </head>
   <body class="bg-gray-50 font-sans">
     <div id="root"></div>
-    <script type="module" src="./index.tsx"></script>
+    <script type="module" src="./index.js"></script>
   </body>
 </html>

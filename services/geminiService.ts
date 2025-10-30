@@ -1,10 +1,9 @@
 
 import { GoogleGenAI } from "@google/genai";
-import type { Student, Class, AttendanceRecord } from '../types';
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-const callGemini = async (prompt: string): Promise<string> => {
+const callGemini = async (prompt) => {
     try {
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
@@ -18,10 +17,10 @@ const callGemini = async (prompt: string): Promise<string> => {
 }
 
 export const getDashboardSummary = async (
-  attendanceData: AttendanceRecord[],
-  students: Student[],
-  currentClass: Class
-): Promise<string> => {
+  attendanceData,
+  students,
+  currentClass
+) => {
   if (attendanceData.length < 3) {
     return "Ainda não há dados de presença suficientes para gerar um resumo inteligente para esta turma. Continue registrando as presenças.";
   }
@@ -53,10 +52,10 @@ export const getDashboardSummary = async (
 
 
 export const getAttendanceAnalysis = async (
-  attendanceData: AttendanceRecord[],
-  students: Student[],
-  classes: Class[]
-): Promise<string> => {
+  attendanceData,
+  students,
+  classes
+) => {
    if (attendanceData.length === 0) {
     return "Não há dados de presença suficientes para gerar uma análise.";
   }
@@ -90,10 +89,10 @@ export const getAttendanceAnalysis = async (
 };
 
 export const getRiskAnalysis = async (
-  attendanceData: AttendanceRecord[],
-  students: Student[],
-  targetStudentId?: string
-): Promise<string> => {
+  attendanceData,
+  students,
+  targetStudentId
+) => {
   if (attendanceData.length < 5) { // Need some data to analyze
     return "Não há dados de presença suficientes para uma análise de risco. Continue registrando as presenças para habilitar esta função.";
   }
@@ -130,9 +129,7 @@ export const getRiskAnalysis = async (
   return callGemini(prompt);
 };
 
-export const getComparativeAnalysis = async (
-    comparisonData: { className: string, attendance: { date: string, rate: number }[] }[]
-): Promise<string> => {
+export const getComparativeAnalysis = async (comparisonData) => {
     if (comparisonData.length < 2) {
         return "Selecione ao menos duas turmas para realizar a comparação.";
     }
@@ -153,14 +150,11 @@ export const getComparativeAnalysis = async (
     return callGemini(prompt);
 };
 
-
-export type CommunicationType = 'absence' | 'positive' | 'support' | 'corrective';
-
 export const getCommunicationDraft = async (
-  studentName: string,
-  className: string,
-  type: CommunicationType
-): Promise<string> => {
+  studentName,
+  className,
+  type
+) => {
   let promptInstruction = '';
 
   switch (type) {

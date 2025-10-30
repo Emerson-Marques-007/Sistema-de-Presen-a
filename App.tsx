@@ -3,19 +3,18 @@ import React, { useState, useEffect } from 'react';
 import { StudentView } from './components/StudentView';
 import { TeacherLogin } from './components/TeacherLogin';
 import { TeacherDashboard } from './components/TeacherDashboard';
-import { StudentLogin, StudentRegisterData } from './components/StudentLogin';
+import { StudentLogin } from './components/StudentLogin';
 import { MOCK_CLASSES, MOCK_TEACHER_ID } from './constants';
-import type { Student, Class, AttendanceRecord, Teacher, CommunicationLog, CommunicationType } from './types';
 
-const App: React.FC = () => {
-  const [students, setStudents] = useState<Student[]>([]);
-  const [classes, setClasses] = useState<Class[]>(MOCK_CLASSES);
-  const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
-  const [loggedInTeacher, setLoggedInTeacher] = useState<Teacher | null>(null);
-  const [loggedInStudent, setLoggedInStudent] = useState<Student | null>(null);
-  const [initialFeedback, setInitialFeedback] = useState<{type: 'success'|'error', message: string} | null>(null);
-  const [studentCredentials, setStudentCredentials] = useState<Record<string, string>>({});
-  const [communicationLogs, setCommunicationLogs] = useState<CommunicationLog[]>([]);
+const App = () => {
+  const [students, setStudents] = useState([]);
+  const [classes, setClasses] = useState(MOCK_CLASSES);
+  const [attendance, setAttendance] = useState([]);
+  const [loggedInTeacher, setLoggedInTeacher] = useState(null);
+  const [loggedInStudent, setLoggedInStudent] = useState(null);
+  const [initialFeedback, setInitialFeedback] = useState(null);
+  const [studentCredentials, setStudentCredentials] = useState({});
+  const [communicationLogs, setCommunicationLogs] = useState([]);
   
   const today = new Date().toISOString().split('T')[0];
   
@@ -28,7 +27,7 @@ const App: React.FC = () => {
     const existingRecords = new Set(attendance.filter(a => a.date === today).map(a => `${a.studentId}-${a.classId}`));
     
     // 2. Itera sobre todas as turmas e seus respectivos alunos.
-    const newRecords: AttendanceRecord[] = [];
+    const newRecords = [];
     classes.forEach(cls => {
         const studentsInClass = students.filter(s => s.classIds.includes(cls.id));
         studentsInClass.forEach(student => {
@@ -52,7 +51,7 @@ const App: React.FC = () => {
   }, [students, classes, today, attendance]);
 
 
-  const handleMarkAttendance = (studentId: string, classId: string) => {
+  const handleMarkAttendance = (studentId, classId) => {
     const recordId = `att-${studentId}-${classId}-${today}`;
     const existingRecord = attendance.find(r => r.id === recordId);
     
@@ -63,7 +62,7 @@ const App: React.FC = () => {
     handleSetAttendance(studentId, classId, today, 'present');
   };
 
-  const handleSetAttendance = (studentId: string, classId: string, date: string, status: 'present' | 'absent') => {
+  const handleSetAttendance = (studentId, classId, date, status) => {
     const recordId = `att-${studentId}-${classId}-${date}`;
     setAttendance(prevAttendance => {
       const recordIndex = prevAttendance.findIndex(record => record.id === recordId);
@@ -75,7 +74,7 @@ const App: React.FC = () => {
         return updatedAttendance;
       } else {
         // Create new record if it doesn't exist
-        const newRecord: AttendanceRecord = {
+        const newRecord = {
           id: recordId,
           studentId,
           classId,
@@ -87,7 +86,7 @@ const App: React.FC = () => {
     });
   };
 
-  const handleJustifyAbsence = (recordId: string, justification: string) => {
+  const handleJustifyAbsence = (recordId, justification) => {
     setAttendance(prev => prev.map(rec => 
         rec.id === recordId 
             ? { ...rec, justification, justificationStatus: 'pending' } 
@@ -95,7 +94,7 @@ const App: React.FC = () => {
     ));
   };
   
-  const handleUpdateJustificationStatus = (recordId: string, status: 'approved' | 'rejected') => {
+  const handleUpdateJustificationStatus = (recordId, status) => {
       setAttendance(prev => prev.map(rec => {
           if (rec.id === recordId) {
               return {
@@ -108,8 +107,8 @@ const App: React.FC = () => {
       }));
   };
 
-  const handleLogCommunication = (log: Omit<CommunicationLog, 'id' | 'timestamp'>) => {
-    const newLog: CommunicationLog = {
+  const handleLogCommunication = (log) => {
+    const newLog = {
       ...log,
       id: `comm-${Date.now()}`,
       timestamp: Date.now()
@@ -117,7 +116,7 @@ const App: React.FC = () => {
     setCommunicationLogs(prev => [newLog, ...prev]);
   };
 
-  const processAttendanceLink = (student: Student) => {
+  const processAttendanceLink = (student) => {
     const urlParams = new URLSearchParams(window.location.search);
     const classId = urlParams.get('classId');
     const date = urlParams.get('date');
@@ -140,7 +139,7 @@ const App: React.FC = () => {
     }
   };
   
-  const handleTeacherLogin = (teacher: Teacher) => {
+  const handleTeacherLogin = (teacher) => {
     setLoggedInTeacher(teacher);
   };
 
@@ -148,7 +147,7 @@ const App: React.FC = () => {
     setLoggedInTeacher(null);
   };
   
-  const handleStudentRegister = (data: StudentRegisterData) => {
+  const handleStudentRegister = (data) => {
       if (students.some(s => s.id === data.id)) {
           throw new Error('Já existe um aluno com esta matrícula.');
       }
@@ -157,9 +156,9 @@ const App: React.FC = () => {
       }
        // Store password for mock login
       if (data.password) {
-          setStudentCredentials(prev => ({ ...prev, [data.email]: data.password! }));
+          setStudentCredentials(prev => ({ ...prev, [data.email]: data.password }));
       }
-      const newStudent: Student = {
+      const newStudent = {
           id: data.id,
           name: data.name,
           email: data.email,
@@ -170,7 +169,7 @@ const App: React.FC = () => {
       processAttendanceLink(newStudent);
   };
 
-  const handleStudentLogin = (email: string, password: string) => {
+  const handleStudentLogin = (email, password) => {
       const student = students.find(s => s.email === email);
       if (!student) {
           throw new Error('Email não encontrado.');
@@ -188,8 +187,8 @@ const App: React.FC = () => {
     window.location.href = window.location.pathname; // Go to teacher login
   }
 
-  const handleAddClass = (className: string) => {
-    const newClass: Class = {
+  const handleAddClass = (className) => {
+    const newClass = {
       id: `c${Date.now()}`,
       name: className,
       teacherId: loggedInTeacher?.id || MOCK_TEACHER_ID,
@@ -198,11 +197,11 @@ const App: React.FC = () => {
     setClasses(prev => [...prev, newClass]);
   };
   
-  const handleEditClass = (classId: string, newName: string) => {
+  const handleEditClass = (classId, newName) => {
     setClasses(prev => prev.map(c => c.id === classId ? {...c, name: newName} : c));
   };
   
-  const handleDeleteClass = (classId: string) => {
+  const handleDeleteClass = (classId) => {
     setClasses(prev => prev.filter(c => c.id !== classId));
     setAttendance(prev => prev.filter(a => a.classId !== classId));
     // Also remove this class from students
@@ -212,7 +211,7 @@ const App: React.FC = () => {
     })))
   };
 
-  const handleUpdateTeacherProfile = (updatedData: Partial<Teacher>) => {
+  const handleUpdateTeacherProfile = (updatedData) => {
     setLoggedInTeacher(prev => {
         if (!prev) return null;
         return { ...prev, ...updatedData };

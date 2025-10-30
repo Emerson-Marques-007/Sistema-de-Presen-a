@@ -1,30 +1,22 @@
+
 import React, { useState } from 'react';
-import type { Class, Student } from '../types';
 import { CheckCircleIcon } from './Icons';
 import { Logo } from './LogoPlaceholder';
 
-export type StudentRegisterData = Omit<Student, 'name'> & { name: string, password?: string };
-
-interface StudentLoginProps {
-  classes: Class[];
-  onLogin: (email: string, password: string) => void;
-  onRegister: (data: StudentRegisterData) => void;
-}
-
-export const StudentLogin: React.FC<StudentLoginProps> = ({ classes, onLogin, onRegister }) => {
+export const StudentLogin = ({ classes, onLogin, onRegister }) => {
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [studentId, setStudentId] = useState(''); // Matricula
-  const [selectedClassIds, setSelectedClassIds] = useState<string[]>([]);
+  const [selectedClassIds, setSelectedClassIds] = useState([]);
   const [error, setError] = useState('');
 
   const [isRecoveryModalOpen, setIsRecoveryModalOpen] = useState(false);
   const [recoveryEmail, setRecoveryEmail] = useState('');
-  const [recoveryStatus, setRecoveryStatus] = useState<'idle' | 'sent'>('idle');
+  const [recoveryStatus, setRecoveryStatus] = useState('idle');
 
-  const handleClassToggle = (classId: string) => {
+  const handleClassToggle = (classId) => {
     setSelectedClassIds(prev =>
       prev.includes(classId)
         ? prev.filter(id => id !== classId)
@@ -32,7 +24,7 @@ export const StudentLogin: React.FC<StudentLoginProps> = ({ classes, onLogin, on
     );
   };
 
-  const handleAuthAction = (e: React.FormEvent) => {
+  const handleAuthAction = (e) => {
     e.preventDefault();
     setError('');
     try {
@@ -58,7 +50,7 @@ export const StudentLogin: React.FC<StudentLoginProps> = ({ classes, onLogin, on
     }
   };
 
-  const handleRecoverySubmit = (e: React.FormEvent) => {
+  const handleRecoverySubmit = (e) => {
     e.preventDefault();
     if (!recoveryEmail) return;
     setTimeout(() => {

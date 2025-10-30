@@ -1,30 +1,17 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import type { Student, Class, AttendanceRecord } from '../types';
 import { LogoutIcon, CheckCircleIcon, ExclamationCircleIcon, BookOpenIcon, QrCodeIcon } from './Icons';
 import { Logo } from './LogoPlaceholder';
 
-interface StudentViewProps {
-  student: Student;
-  allClasses: Class[];
-  attendanceRecords: AttendanceRecord[];
-  onMarkAttendance: (studentId: string, classId: string) => void;
-  onLogout: () => void;
-  onJustifyAbsence: (recordId: string, justification: string) => void;
-  initialFeedback?: { type: 'success' | 'error'; message: string } | null;
-}
-
-type ActiveTab = 'attendance' | 'history';
-
-export const StudentView: React.FC<StudentViewProps> = (props) => {
+export const StudentView = (props) => {
   const { student, allClasses, attendanceRecords, onMarkAttendance, onLogout, onJustifyAbsence, initialFeedback } = props;
   
-  const [activeTab, setActiveTab] = useState<ActiveTab>('attendance');
-  const [selectedClassId, setSelectedClassId] = useState<string>('');
-  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [activeTab, setActiveTab] = useState('attendance');
+  const [selectedClassId, setSelectedClassId] = useState('');
+  const [feedback, setFeedback] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
-  const [justificationModal, setJustificationModal] = useState<AttendanceRecord | null>(null);
+  const [justificationModal, setJustificationModal] = useState(null);
   const [justificationText, setJustificationText] = useState('');
 
   const studentClasses = useMemo(() => 
@@ -73,7 +60,7 @@ export const StudentView: React.FC<StudentViewProps> = (props) => {
   }, [attendanceRecords]);
 
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (!selectedClassId) {
       setFeedback({ type: 'error', message: 'Por favor, selecione a turma.' });
@@ -101,7 +88,7 @@ export const StudentView: React.FC<StudentViewProps> = (props) => {
     }, 500);
   };
 
-  const handleJustificationSubmit = (e: React.FormEvent) => {
+  const handleJustificationSubmit = (e) => {
     e.preventDefault();
     if (!justificationText.trim() || !justificationModal) return;
     onJustifyAbsence(justificationModal.id, justificationText.trim());
@@ -189,7 +176,7 @@ export const StudentView: React.FC<StudentViewProps> = (props) => {
         <div className="bg-white rounded-xl shadow-lg border border-gray-200">
             <div className="flex border-b border-gray-200">
                 {TABS.map(tab => (
-                    <button key={tab.id} onClick={() => setActiveTab(tab.id as ActiveTab)} className={`flex-1 flex items-center justify-center gap-2 py-3 font-semibold transition-colors ${activeTab === tab.id ? 'text-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-100'}`}>
+                    <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex-1 flex items-center justify-center gap-2 py-3 font-semibold transition-colors ${activeTab === tab.id ? 'text-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-100'}`}>
                         <tab.icon className="w-5 h-5"/> {tab.label}
                     </button>
                 ))}

@@ -1,13 +1,9 @@
+
 import React, { useState } from 'react';
-import type { Teacher } from '../types';
 import { CheckCircleIcon } from './Icons';
 import { Logo } from './LogoPlaceholder';
 
-interface TeacherLoginProps {
-  onLogin: (teacher: Teacher) => void;
-}
-
-export const TeacherLogin: React.FC<TeacherLoginProps> = ({ onLogin }) => {
+export const TeacherLogin = ({ onLogin }) => {
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -16,9 +12,9 @@ export const TeacherLogin: React.FC<TeacherLoginProps> = ({ onLogin }) => {
   const [error, setError] = useState('');
   const [isRecoveryModalOpen, setIsRecoveryModalOpen] = useState(false);
   const [recoveryEmail, setRecoveryEmail] = useState('');
-  const [recoveryStatus, setRecoveryStatus] = useState<'idle' | 'sent'>('idle');
+  const [recoveryStatus, setRecoveryStatus] = useState('idle');
 
-  const handleAuthAction = (e: React.FormEvent) => {
+  const handleAuthAction = (e) => {
     e.preventDefault();
     setError('');
 
@@ -27,7 +23,7 @@ export const TeacherLogin: React.FC<TeacherLoginProps> = ({ onLogin }) => {
         setError('Email é obrigatório.');
         return;
       }
-      const mockTeacher: Teacher = { id: 't1', name: name || 'Professor Exemplo', email, sector: sector || 'Educação', photoUrl: '' };
+      const mockTeacher = { id: 't1', name: name || 'Professor Exemplo', email, sector: sector || 'Educação', photoUrl: '' };
       onLogin(mockTeacher);
       return;
     }
@@ -50,11 +46,11 @@ export const TeacherLogin: React.FC<TeacherLoginProps> = ({ onLogin }) => {
         return;
     }
     
-    const mockTeacher: Teacher = { id: 't1', name: 'Professor Exemplo', email, sector: 'Educação', photoUrl: '' };
+    const mockTeacher = { id: 't1', name: 'Professor Exemplo', email, sector: 'Educação', photoUrl: '' };
     onLogin(mockTeacher);
   };
 
-  const handleRecoverySubmit = (e: React.FormEvent) => {
+  const handleRecoverySubmit = (e) => {
     e.preventDefault();
     if (!recoveryEmail) return;
     setTimeout(() => {
